@@ -33,6 +33,7 @@
   --bubble-me:#1c3550; --bubble:#22263c; --faith:#b9a3ff; --faith-soft:#241d3d; color-scheme:dark}
 
 *{box-sizing:border-box}
+[hidden]{display:none!important}
 body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:1.0625rem;line-height:1.6;margin:0}
 body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--surface)}
 .wrap{max-width:1040px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
@@ -411,6 +412,37 @@ ul.tidy{margin:0;padding-left:1.15rem;display:grid;gap:.45rem}
 .totop-float{position:fixed;right:calc(16px + env(safe-area-inset-right,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:20;width:48px;height:48px;border-radius:50%;border:0;background:var(--ink);color:var(--bg);font:800 1.3rem var(--f-display);cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.25)}
 @media (max-width:820px){.game .game-act{grid-column:1/-1;justify-content:flex-start}}
 
+
+/* Partes de lectura */
+.parts-head{display:grid;gap:.6rem}
+.pdots{display:flex;flex-wrap:wrap;gap:.4rem}
+.pdot{font:600 .82rem var(--f-body);padding:.3rem .7rem;border-radius:999px;border:1px solid var(--line);color:var(--muted);background:var(--surface)}
+.pdot.here{border-color:var(--alert);color:var(--alert);background:var(--alert-soft)}
+.pdot.done::before{content:"✓ ";color:var(--safe)}
+.part{display:grid;gap:2rem}
+.part-nav{display:flex;flex-wrap:wrap;gap:.8rem;align-items:center;justify-content:space-between}
+.part-nav .pneed{flex:1;text-align:right;font-size:.9rem;color:var(--muted)}
+.part-nav .btn.primary:disabled{opacity:.4;cursor:not-allowed}
+.stepnav.only-last .next,.stepnav.only-last .need{display:none}
+.rcheck{border:2px solid var(--warn);background:var(--warn-soft);border-radius:18px;padding:1.2rem 1.3rem;display:grid;gap:.8rem}
+.rcheck > .label{color:var(--warn)}
+.rcheck.done{border-color:var(--safe);background:var(--safe-soft)}
+.rcheck.done > .label{color:var(--safe)}
+.rcheck.locked{border-style:dashed;border-color:var(--line);background:var(--surface)}
+.rcheck.locked > .label{color:var(--muted)}
+.rq{font-family:var(--f-display);font-weight:700;font-size:1.2rem;line-height:1.3}
+.ropts{display:grid;gap:.5rem}
+.rfb{font-size:.97rem}.rfb.ok b{color:var(--safe)}.rfb.no b{color:var(--alert)}
+.card.flip{cursor:pointer;position:relative}
+.card.flip:not(.open) > :not(h3):not(.tip):not(.label){display:none}
+.card.flip .tip{font:600 .8rem var(--f-mono);color:var(--alert);text-transform:uppercase;letter-spacing:.05em}
+.card.flip.open .tip{display:none}
+.card.flip:not(.open){border-style:dashed;border-color:var(--alert)}
+.card.flip:not(.open):hover{background:var(--alert-soft)}
+.help .card.flip{color:inherit}
+.gpart .game{border-width:3px}
+@media (max-width:520px){.part-nav .pneed{order:-1;flex-basis:100%;text-align:left}.part-nav .btn{flex:1;text-align:center}}
+
 /* Ayuda */
 .help{background:var(--ink);color:var(--bg)}
 .help section.r{border:0}
@@ -464,7 +496,7 @@ html{scroll-behavior:smooth;scroll-padding-top:5rem}
           <button type="button" id="pick-1" data-start="1"><b>Ciclo básico</b><small>1° año · 12 y 13 años</small><span class="go">Empezar →</span></button>
           <button type="button" id="pick-45" data-start="45"><b>Ciclo superior</b><small>4° y 5° año · 16 y 17 años</small><span class="go">Empezar →</span></button>
         </div>
-        <p style="font-size:.9rem;color:var(--muted)">Vas a recorrer 6 temas. Cada tema termina con un juego y su nota. Al final hay una evaluación y ves tu libreta con todas las notas.</p>
+        <p style="font-size:.9rem;color:var(--muted)">Vas a recorrer 6 temas. Cada tema tiene partes para leer, y cada parte termina con una pregunta sobre lo que leíste. Cuando terminás de leer, se abre el juego. Al final hay una evaluación y ves tu libreta con todas las notas.</p>
       </div>
     </div>
 
@@ -915,7 +947,7 @@ html{scroll-behavior:smooth;scroll-padding-top:5rem}
 <section class="r step" id="libreta">
   <div class="wrap">
     <div class="r-head"><div class="big-r" aria-hidden="true">✓</div><p class="label">Final</p><h2>Tu libreta</h2></div>
-    <div class="prose"><p>Terminaste el recorrido. Estas son tus notas. Si jugaste un juego más de una vez, se guarda la mejor.</p></div>
+    <div class="prose"><p>Terminaste el recorrido. Estas son tus notas. La nota de lectura cuenta las preguntas que acertaste a la primera. Si jugaste un juego más de una vez, se guarda la mejor nota.</p></div>
     <div class="scroll"><table class="chem libro"><thead><tr><th>Tema</th><th>Actividad</th><th>Nota</th></tr></thead><tbody id="lib-rows"></tbody><tfoot><tr><td colspan="2">Promedio</td><td id="lib-avg">—</td></tr></tfoot></table></div>
     <div class="ev-res" id="lib-msg"></div>
     <div class="g-row"><button type="button" class="btn" id="lib-restart">Empezar de nuevo</button></div>
@@ -1285,7 +1317,9 @@ function refresh(){
  document.querySelector('.rs').hidden=st.cur===0;
  var cl=document.getElementById('cyc-label'),cc=document.getElementById('cyc-change');cl.hidden=cc.hidden=!st.age;if(st.age)cl.textContent=cycName(st.age);
  if(STEPS[st.cur]==='libreta')libreta();
+ document.dispatchEvent(new Event('cb-refresh'));
 }
+window.__cb={get st(){return st},save:save,refresh:refresh};
 function go(k){if(playing)closeGame();st.cur=k;if(k>st.max)st.max=k;save();refresh();top()}
 function setCycle(a){root.setAttribute('data-age',a);try{localStorage.setItem('cb-age',a)}catch(e){}}
 function reset(a){st={age:a,cur:0,max:0,notes:{}};document.querySelectorAll('.arena').forEach(function(x){delete x.dataset.age})}
@@ -1293,8 +1327,9 @@ document.querySelectorAll('[data-start]').forEach(function(b){b.addEventListener
 document.getElementById('cyc-change').onclick=function(){go(0)};
 document.getElementById('lib-restart').onclick=function(){reset(st.age);save();go(1)};
 
-function libreta(){var rows='',sum=0,n=0;['r1','r2','r3','r4','r5','r6','eval'].forEach(function(id){var g=GAMEOF[id],v=st.notes[g];if(v!=null){sum+=v;n++}
-  rows+='<tr><td>'+NAMES[id]+'</td><td>'+(g==='ev'?'Evaluación final':gameTitle(g))+'</td><td>'+(v!=null?v+'/10':'—')+'</td></tr>'});
+function libreta(){var rows='',sum=0,n=0;function row(t,a,v){if(v!=null){sum+=v;n++}rows+='<tr><td>'+t+'</td><td>'+a+'</td><td>'+(v!=null?v+'/10':'—')+'</td></tr>'}
+ ['r1','r2','r3','r4','r5','r6'].forEach(function(id){row(NAMES[id],'Lectura (preguntas del texto)',st.notes['l'+id.slice(1)]);row('','Juego: '+gameTitle(GAMEOF[id]),st.notes[GAMEOF[id]])});
+ row('Evaluación final','10 preguntas',st.notes.ev);
  document.getElementById('lib-rows').innerHTML=rows;var avg=n?Math.round(sum/n*10)/10:null;var as=avg!=null?String(avg).replace('.',','):'—';document.getElementById('lib-avg').textContent=avg!=null?as+'/10':'—';
  var t=avg==null?['—','Todavía no tenés notas.']:avg>=9?['¡Excelente!','Sabés reconocer, frenar y prevenir el ciberbullying. Ahora podés ayudar a otros.']:avg>=7?['¡Muy bien!','Ya tenés lo más importante. Podés volver a jugar los temas con nota más baja.']:avg>=6?['Aprobado','Repasá los temas con nota más baja y volvé a jugarlos.']:['Seguí aprendiendo','Volvé a recorrer los temas y jugá de nuevo. Cada intento suma.'];
  document.getElementById('lib-msg').innerHTML='<p class="label" style="color:inherit;opacity:.7">'+cycName(st.age)+' · Fase 1 completada</p><div class="score">'+as+'</div><h3>'+t[0]+'</h3><p>'+t[1]+'</p><p style="opacity:.75;font-size:.9rem">Mostrale esta pantalla a tu docente.</p>'}
@@ -1310,6 +1345,105 @@ var ft=document.getElementById('totop-float');function tf(){ft.hidden=window.scr
 load();
 if(st.age){setCycle(st.age)}else{st.cur=0}
 refresh();
+})();
+</script>
+<script>
+(function(){
+var CB=window.__cb;if(!CB)return;
+var B='1',S='45';
+// partes de cada tema: índices de los bloques originales, título, si hay tarjetas para abrir, y pregunta de lectura (por ciclo si cambia)
+var T={
+r1:[
+ {i:[1],t:'Qué es',q:{q:'Según la definición, ¿cuándo es ciberbullying?',o:['Cuando alguien se enoja una vez en un chat','Cuando se agrede, humilla, excluye o intimida a alguien a propósito y de forma repetida','Cuando una persona publica muchas fotos'],a:1,h:'Volvé a leer la frase en grande y las 3 claves de abajo.'}},
+ {i:[2,3],t:'Las 3 claves juntas',q:{q:'En el gráfico de los círculos, ¿dónde está el ciberbullying?',o:['Dentro de un solo círculo','Donde se juntan las tres claves','Afuera de los círculos'],a:1,h:'Mirá qué hay en el centro, donde se cruzan los tres círculos.'}},
+ {i:[4,5,6,7,8,9],t:'Por qué duele distinto',rev:1,q:{q:'¿Cuál de estas frases es correcta según las tarjetas?',o:['Una cuenta falsa te hace invisible y nadie puede saber quién fue','El ciberbullying no tiene horario, tiene mucho público y queda guardado','El ciberbullying solo pasa en los juegos online'],a:1,h:'Releé las tarjetas "No tiene horario", "Tiene mucho público" y "Parece anónimo, pero no lo es".'}}],
+r2:[
+ {i:[1,2],t:'Las formas del acoso',rev:1,q:{q:'Crear un perfil con la foto de otra persona para escribir cosas en su nombre es…',o:['Exclusión','Suplantación','Trolling'],a:1,h:'Buscá la tarjeta que habla de "hacerse pasar por otra persona".'}},
+ {i:[3,4],t:'Grooming',q:{q:'¿Cuál es una señal de alerta de grooming?',o:['Que te pida mantener la conversación en secreto','Que te saluden por tu cumpleaños en el grupo del curso','Que un profe mande la tarea por mail'],a:0,h:'Mirá el paso 3 de la infografía y la lista de señales de alerta.'}},
+ {i:[5,6],t:'Mirá el video',q:{q:'Después de un saludo amable, alguien te pide una foto tuya "solo para bromear". ¿Qué hacés?',o:['La mando, total es una broma','No la mando, guardo el chat y se lo cuento a un adulto','Le pido que primero me mande una suya'],a:1,h:'Releé "Podés cortarlo en cualquier paso" en la infografía del grooming.'}}],
+r3:[
+ {i:[1,2,3],t:'Los tres lugares',q:{q:'Según el gráfico, ¿qué pasa con el acoso cuando los testigos defienden?',o:['Crece','Sigue igual','Se frena'],a:2,h:'Mirá la barra verde del gráfico de los testigos.'}},
+ {i:[4,5,6],t:'Por qué alguien acosa',rev:1,q:{q:'¿Cuál es una de las razones por las que alguien acosa?',o:['Buscar aceptación o likes','Porque la víctima se lo merece','Porque es la única forma de divertirse'],a:0,h:'Abrí de nuevo las tarjetas de las razones.'}},
+ {i:[7,8,9],t:'Una historia',q:{'1':{q:'En la historia, ¿cómo se enteró la mamá de Javier?',o:['Se lo contó Lucas','Vio el mensaje en el celular de Javier','Lo vio en la televisión'],a:1,h:'Releé la historia de Lucas y Javier.'},'45':{q:'Si te diste cuenta de que te equivocaste, ¿qué conviene hacer?',o:['Borrar lo que publicaste y pedir disculpas','Esperar a que todos se olviden','Decir que era una broma'],a:0,h:'Releé la lista de "¿Y si fui yo?".'}}}],
+r4:[
+ {i:[1,2],t:'Las tres áreas',rev:1,q:{q:'Faltar al colegio o alejarse de los amigos es un efecto…',o:['Psicológico','Físico','Social'],a:2,h:'Abrí de nuevo las tres tarjetas y fijate en cuál aparece.'}},
+ {i:[3,4],t:'El círculo del estrés',q:{'1':{q:'En el círculo del estrés, ¿qué es lo que corta el círculo?',o:['Contestar más fuerte','Contarlo y pedir ayuda','Cambiar de celular'],a:1,h:'Mirá lo que dice en el centro del círculo.'},'45':{q:'¿Qué sustancia se mantiene alta con el acoso y deja un estrés continuo?',o:['Serotonina','Cortisol','Endorfina'],a:1,h:'Releé "Qué pasa en el cerebro" y la tabla.'}}},
+ {i:[5,6],t:'Señales de alerta',q:{q:'¿Cuál de estas es una señal de que un amigo puede estar pasándola mal?',o:['Se pone nervioso cada vez que recibe mensajes','Va al club como siempre','Se ríe con un video gracioso'],a:0,h:'Releé la lista de señales.'}}],
+r5:[
+ {i:[1],t:'¿Qué hago?',q:{q:'Según el diagrama, si hay amenazas, fotos íntimas o un adulto pidiéndote cosas, ¿qué hacés?',o:['Lo resuelvo solo','Se lo cuento ya a un adulto y no borro nada','Borro todo para que nadie lo vea'],a:1,h:'Seguí la flecha del "Sí" en el diagrama.'}},
+ {i:[2,3,4,5],t:'Paso a paso',tabs:1,q:{q:'¿Por qué conviene sacar capturas antes de bloquear?',o:['Para mandárselas a todo el grupo','Porque son pruebas, y después de bloquear a veces ya no se ven los mensajes','No hace falta sacar capturas'],a:1,h:'Releé el paso 2 de "Si me pasa a mí".'}},
+ {i:[6,7],t:'Pedir ayuda',q:{'1':{q:'Según el texto, contarle a un adulto lo que pasa es…',o:['Botonear','Cuidarte y cuidar a otros','Exagerar'],a:1,h:'Releé la frase en negrita del recuadro.'},'45':{q:'Si el caso es grave (amenazas, imágenes íntimas, extorsión), además de reportar podés…',o:['Hacer la denuncia formal: Línea 137 o comisaría, con tus capturas','Responder con amenazas','Borrar tu cuenta y olvidarte'],a:0,h:'Releé el final del recuadro.'}}}],
+r6:[
+ {i:[1],t:'Antes de publicar',q:{q:'Si en alguna de las 3 preguntas dudás, ¿qué hacés?',o:['Lo publico igual','Mejor no lo publico','Lo publico solo en historias'],a:1,h:'Mirá lo que dice debajo de las 3 preguntas.'}},
+ {i:[2,3],t:'Tu lista de cuidados',q:{q:'¿Cuál de estos datos es mejor guardar?',o:['Un truco para memorizar','Que tu familia se fue de viaje','Un consejo para dormir mejor'],a:1,h:'Mirá la columna "Mejor guardarlo".'}},
+ {i:[4,5,6,7],t:'Para tu edad',q:{'1':{q:'¿Con quién podés compartir tus contraseñas?',o:['Con tu mejor amigo','Solo con tus padres o tutores','Con amigos del juego online'],a:1,h:'Releé la lista del recuadro.'},'45':{q:'¿Qué es el diseño persuasivo?',o:['Trucos como el feed infinito o las rachas para que no sueltes la pantalla','Un diseño lindo de perfil','Un filtro de fotos'],a:0,h:'Releé el primer punto del recuadro.'}}}]
+};
+function st(){var s=CB.st;s.parts=s.parts||{};s.chk=s.chk||{};s.seen=s.seen||{};return s}
+function age(){return CB.st.age==='45'?'45':'1'}
+function Q(p){return p.q.q?p.q:p.q[age()]}
+function esc(x){return String(x).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+
+var built={};
+Object.keys(T).forEach(function(id){
+ var w=document.querySelector('#'+id+' .wrap'),kids=[].slice.call(w.children),head=kids[0],nav=w.querySelector(':scope > .stepnav');
+ var ph=document.createElement('div');ph.className='parts-head';head.after(ph);
+ var parts=T[id].map(function(p,k){var d=document.createElement('div');d.className='part';d.dataset.k=k;
+  p.i.forEach(function(ix){d.appendChild(kids[ix])});
+  if(p.rev)d.querySelectorAll('.grid > .card, .effects > .card').forEach(function(c){c.classList.add('flip');c.tabIndex=0;c.setAttribute('role','button');c.setAttribute('aria-expanded','false');
+   var tip=document.createElement('span');tip.className='tip';tip.textContent='Tocá para leer';c.appendChild(tip);
+   function open(){if(c.classList.contains('open'))return;c.classList.add('open');c.setAttribute('aria-expanded','true');render(id)}
+   c.addEventListener('click',open);c.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();open()}})});
+  if(p.tabs)d.querySelectorAll('[role="tab"]').forEach(function(tb){tb.addEventListener('click',function(){var s=st();s.seen[id]=s.seen[id]||{};s.seen[id][tb.id]=1;CB.save();render(id)})});
+  var ck=document.createElement('div');ck.className='rcheck';d.appendChild(ck);
+  nav.before(d);return d});
+ var gp=document.createElement('div');gp.className='part gpart';gp.dataset.k=T[id].length;
+ gp.innerHTML='<div class="prose"><p class="label">¡Leíste todo el tema!</p><h3>Ahora, el juego</h3><p>Ya respondiste las preguntas de lectura. Jugá para practicar lo que aprendiste y sacar la nota del juego.</p></div>';
+ gp.appendChild(w.querySelector(':scope > .game'));var ar=w.querySelector(':scope > .arena');if(ar)gp.appendChild(ar);
+ nav.before(gp);parts.push(gp);
+ var pn=document.createElement('div');pn.className='part-nav';pn.innerHTML='<button type="button" class="btn pprev">← Parte anterior</button><span class="pneed"></span><button type="button" class="btn primary pnext">Siguiente parte →</button>';nav.before(pn);
+ pn.querySelector('.pprev').onclick=function(){var s=st();s.parts[id]=Math.max(0,(s.parts[id]||0)-1);CB.save();render(id);scrollTop(id)};
+ pn.querySelector('.pnext').onclick=function(){var s=st();var k=s.parts[id]||0;if(!solved(id,k))return;s.parts[id]=k+1;CB.save();render(id);scrollTop(id)};
+ built[id]={parts:parts,ph:ph,pn:pn,nav:nav};
+});
+function scrollTop(id){document.getElementById(id).scrollIntoView({block:'start',behavior:'instant'});window.scrollBy(0,-70)}
+function key(id,k){return id+'-'+k+'-'+age()}
+function solved(id,k){var c=st().chk[key(id,k)];return !!(c&&c.ok)}
+function ready(id,k){var p=T[id][k],d=built[id].parts[k];if(p.rev){var f=[].filter.call(d.querySelectorAll('.flip'),function(x){return getComputedStyle(x).display!=='none'}),o=f.filter(function(x){return x.classList.contains('open')});if(o.length<f.length)return{ok:false,msg:'Tocá las '+f.length+' tarjetas para leerlas. Después aparece la pregunta ('+o.length+' de '+f.length+' abiertas).'}}
+ if(p.tabs){var sn=(st().seen[id]||{});var n=['tab-a','tab-b','tab-c'].filter(function(t){return t==='tab-a'||sn[t]}).length;if(n<3)return{ok:false,msg:'Mirá las 3 pestañas ("Si me pasa a mí", "Si lo veo" y "Si lo hice yo") para ver la pregunta ('+n+' de 3).'}}
+ return{ok:true}}
+function perm(t,n){var h=0;for(var i=0;i<t.length;i++)h=(h*31+t.charCodeAt(i))>>>0;var a=[];for(var i=0;i<n;i++)a.push(i);for(var i=n-1;i>0;i--){h=(h*1103515245+12345)>>>0;var j=h%(i+1);var x=a[i];a[i]=a[j];a[j]=x}return a}
+function renderCheck(id,k){var d=built[id].parts[k],box=d.querySelector('.rcheck'),q=Q(T[id][k]),c=st().chk[key(id,k)]||{},r=ready(id,k);
+ if(!r.ok){box.className='rcheck locked';box.innerHTML='<p class="label">Comprobá lo que leíste</p><p>'+esc(r.msg)+'</p>';return}
+ box.className='rcheck'+(c.ok?' done':'');
+ var h='<p class="label">Comprobá lo que leíste</p><p class="rq">'+esc(q.q)+'</p><div class="ropts">';
+ perm(q.q,q.o.length).forEach(function(j){var o=q.o[j];var cls=c.ok&&j===q.a?' ok':(c.bad&&c.bad.indexOf(j)>-1?' no':'');h+='<button type="button" class="btn'+cls+'" data-j="'+j+'"'+((c.ok||(c.bad&&c.bad.indexOf(j)>-1))?' disabled':'')+'>'+esc(o)+'</button>'});
+ h+='</div>';
+ if(c.ok)h+='<p class="rfb ok"><b>¡Bien!</b> '+(c.first?'Acertaste a la primera.':'Lo encontraste releyendo.')+'</p>';
+ else if(c.bad&&c.bad.length)h+='<p class="rfb no"><b>No es esa.</b> '+esc(q.h)+' Después elegí otra opción.</p>';
+ box.innerHTML=h;
+ box.querySelectorAll('.ropts .btn').forEach(function(b){b.onclick=function(){var s=st(),kk=key(id,k),cc=s.chk[kk]||{bad:[]};cc.bad=cc.bad||[];var j=+b.dataset.j;
+  if(j===q.a){cc.ok=true;cc.first=cc.bad.length===0}else cc.bad.push(j);s.chk[kk]=cc;
+  var tot=T[id].length,good=0,all=true;for(var i=0;i<tot;i++){var x=s.chk[key(id,i)];if(!x||!x.ok)all=false;else if(x.first)good++}
+  if(all)s.notes['l'+id.slice(1)]=Math.max(1,Math.round(good/tot*10));
+  CB.save();render(id);CB.refresh()}})}
+function render(id){if(!built[id])return;var s=st(),b=built[id],n=T[id].length,k=Math.min(s.parts[id]||0,n);
+ for(var i=0;i<n;i++)if(!solved(id,i)){if(k>i)k=i;break}
+ s.parts[id]=k;
+ b.parts.forEach(function(d,i){d.hidden=i!==k});
+ var dots='';for(var i=0;i<=n;i++){var lab=i<n?T[id][i].t:'Juego';dots+='<span class="pdot'+(i===k?' here':'')+(i<n&&solved(id,i)?' done':'')+(i===n&&s.notes['g'+id.slice(1)]!=null?' done':'')+'">'+esc(lab)+'</span>'}
+ b.ph.innerHTML='<p class="label">'+(k<n?'Parte '+(k+1)+' de '+n+' · Leé con atención':'Último paso · Juego')+'</p><div class="pdots">'+dots+'</div>';
+ if(k<n)renderCheck(id,k);
+ var pv=b.pn.querySelector('.pprev'),nx=b.pn.querySelector('.pnext'),need=b.pn.querySelector('.pneed');
+ pv.hidden=k===0;nx.hidden=k>=n;nx.disabled=k<n&&!solved(id,k);need.textContent=k<n&&!solved(id,k)?'Respondé la pregunta para seguir':'';
+ b.pn.hidden=k===0&&false;
+ b.nav.classList.toggle('only-last',k<n);
+ if(k===n)b.nav.querySelector('.need')&&0;
+}
+function renderAll(){Object.keys(T).forEach(render)}
+document.addEventListener('cb-refresh',function(){var cur=document.querySelector('.step.current');if(cur&&built[cur.id])render(cur.id)});
+new MutationObserver(function(){Object.keys(built).forEach(function(id){built[id].parts.forEach(function(d){d.querySelectorAll('.flip.open').forEach(function(c){})})})}).observe(document.documentElement,{attributes:true,attributeFilter:['data-age']});
+renderAll();
+window.__cbParts={render:render,T:T};
 })();
 </script>
 
